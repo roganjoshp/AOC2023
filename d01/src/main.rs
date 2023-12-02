@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fs;
+use std::{fs, string};
 
 fn read_input(filename: &str) -> Vec<String> {
     let file = fs::read_to_string(filename).expect("Cannot find file");
@@ -7,7 +7,7 @@ fn read_input(filename: &str) -> Vec<String> {
     lines
 }
 
-fn get_digits(instructions: Vec<String>) -> Vec<String> {
+fn get_digits(instructions: &Vec<String>) -> Vec<String> {
     instructions
         .iter()
         .map(|row| row.chars().filter(|c| c.is_digit(10)).collect())
@@ -38,7 +38,7 @@ fn search_for_string_no(
         if candidates.contains_key(&letter.as_ref()) {
             let words = candidates.get(&letter.as_ref()).unwrap();
             for &word in words.iter() {
-                if letters[i..].contains(*word) {
+                if letters[i..].join("").starts_with(&word) {
                     return Some(*word_map.get(word).unwrap());
                 }
             }
@@ -47,7 +47,7 @@ fn search_for_string_no(
     None
 }
 
-fn find_numbers(instructions: Vec<String>) -> () {
+fn find_numbers(instructions: &Vec<String>) -> () {
     let candidates: HashMap<&str, Vec<&str>> = HashMap::from([
         ("o", vec!["one"]),
         ("t", vec!["two", "three"]),
@@ -68,33 +68,46 @@ fn find_numbers(instructions: Vec<String>) -> () {
         ("nine", 9),
     ]);
 
-    for inst in instructions.iter() {
-        let first_non_digit: Vec<String> = inst
+    for (x, inst) in instructions.iter().enumerate() {
+        let first_to_digit: Vec<String> = inst
             .chars()
             .take_while(|c| !c.is_digit(10))
             .map(|c| c.to_string())
             .collect();
         let mut first_value: u32 = 0;
-        if first_non_digit.len() == inst.len() {
-            // There are no digits in the string
-        } else if first_non_digit.len() < 3 {
+        if first_to_digit.len() == inst.len() {
+            first_value = 50;
+        } else if first_to_digit.len() < 3 {
             // We definitely can't have a string number
             first_value = inst
                 .chars()
-                .nth(first_non_digit.len())
+                .nth(first_to_digit.len())
                 .unwrap()
                 .to_digit(10)
                 .unwrap();
         } else {
-            // Check to see if there is a string number before the first digit
+            let string_search = search_for_string_no(&first_to_digit, &candidates, &word_map);
+            match string_search {
+                Some(i) => first_value = string_search.unwrap(),
+                _ => {
+                    first_value = inst
+                        .chars()
+                        .nth(first_to_digit.len())
+                        .unwrap()
+                        .to_digit(10)
+                        .unwrap()
+                }
+            }
         }
+        println!("{:?}", (x + 1, first_value));
     }
 }
 
 fn main() {
     let data = read_input("part_1.txt");
-    let digits = get_digits(data);
-    println!("{:?}", digits);
-    let total = sum_instructions(digits);
-    println!("{:?}", total);
+    let digits = get_digits(&data);
+    // println!("{:?}", digits);
+    // let total = sum_instructions(digits);
+    // println!("{:?}", total);
+    find_numbers(&data);
 }
