@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::{fs, string};
+use std::fs;
 
 fn read_input(filename: &str) -> Vec<String> {
     let file = fs::read_to_string(filename).expect("Cannot find file");
@@ -33,21 +33,26 @@ fn search_for_string_no(
     letters: &Vec<String>,
     candidates: &HashMap<&str, Vec<&str>>,
     word_map: &HashMap<&str, u32>,
+    eager: bool,
 ) -> Option<u32> {
+    let mut number: Option<u32> = None;
     for (i, letter) in letters.iter().enumerate() {
         if candidates.contains_key(&letter.as_ref()) {
             let words = candidates.get(&letter.as_ref()).unwrap();
             for &word in words.iter() {
                 if letters[i..].join("").starts_with(&word) {
-                    return Some(*word_map.get(word).unwrap());
+                    if eager {
+                        return Some(*word_map.get(word).unwrap());
+                    }
+                    number = Some(*word_map.get(word).unwrap());
                 }
             }
         }
     }
-    None
+    number
 }
 
-fn find_numbers(instructions: &Vec<String>) -> () {
+fn find_numbers(instructions: &Vec<String>) -> u32 {
     let candidates: HashMap<&str, Vec<&str>> = HashMap::from([
         ("o", vec!["one"]),
         ("t", vec!["two", "three"]),
@@ -67,17 +72,19 @@ fn find_numbers(instructions: &Vec<String>) -> () {
         ("eight", 8),
         ("nine", 9),
     ]);
+    let mut total_sum: u32 = 0;
 
     for (x, inst) in instructions.iter().enumerate() {
+        let mut first_value: u32 = 0;
+        let mut last_value: u32 = 0;
+
         let first_to_digit: Vec<String> = inst
             .chars()
             .take_while(|c| !c.is_digit(10))
             .map(|c| c.to_string())
             .collect();
-        let mut first_value: u32 = 0;
-        if first_to_digit.len() == inst.len() {
-            first_value = 50;
-        } else if first_to_digit.len() < 3 {
+
+        if first_to_digit.len() < 3 {
             // We definitely can't have a string number
             first_value = inst
                 .chars()
@@ -86,9 +93,9 @@ fn find_numbers(instructions: &Vec<String>) -> () {
                 .to_digit(10)
                 .unwrap();
         } else {
-            let string_search = search_for_string_no(&first_to_digit, &candidates, &word_map);
+            let string_search = search_for_string_no(&first_to_digit, &candidates, &word_map, true);
             match string_search {
-                Some(i) => first_value = string_search.unwrap(),
+                Some(_i) => first_value = string_search.unwrap(),
                 _ => {
                     first_value = inst
                         .chars()
@@ -99,15 +106,47 @@ fn find_numbers(instructions: &Vec<String>) -> () {
                 }
             }
         }
-        println!("{:?}", (x + 1, first_value));
+
+        let last_to_digit: Vec<String> = inst
+            .chars()
+            .rev()
+            .take_while(|c| !c.is_digit(10))
+            .map(|c| c.to_string())
+            .collect();
+
+        if last_to_digit.len() < 3 {
+            last_value = inst
+                .chars()
+                .nth_back(last_to_digit.len())
+                .unwrap()
+                .to_digit(10)
+                .unwrap();
+        } else {
+            let ending = last_to_digit.into_iter().rev().collect();
+            let rev_search = search_for_string_no(&ending, &candidates, &word_map, false);
+            match rev_search {
+                Some(i) => last_value = rev_search.unwrap(),
+                _ => {
+                    last_value = inst
+                        .chars()
+                        .nth_back(ending.len())
+                        .unwrap()
+                        .to_digit(10)
+                        .unwrap()
+                }
+            }
+        }
+        total_sum = total_sum + (first_value * 10) + last_value;
     }
+    total_sum
 }
 
 fn main() {
     let data = read_input("part_1.txt");
     let digits = get_digits(&data);
     // println!("{:?}", digits);
-    // let total = sum_instructions(digits);
-    // println!("{:?}", total);
-    find_numbers(&data);
+    let part_1 = sum_instructions(digits);
+    println!("{:?}", part_1);
+    let part_2 = find_numbers(&data);
+    println!("{:?}", part_2);
 }
