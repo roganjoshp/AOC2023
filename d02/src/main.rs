@@ -1,6 +1,6 @@
 use std::{fs, str::FromStr};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct Round {
     red: i32,
     green: i32,
@@ -22,9 +22,7 @@ impl FromStr for Round {
     type Err = Error;
 
     fn from_str(data: &str) -> Result<Self, Self::Err> {
-        let mut red = 0;
-        let mut green = 0;
-        let mut blue = 0;
+        let mut obj = Round::default();
 
         let split_parts: Vec<&str> = data.split(",").map(|s| s.trim()).collect();
 
@@ -33,17 +31,13 @@ impl FromStr for Round {
             let qty = number.parse::<i32>().unwrap();
 
             match colour {
-                "red" => red += qty,
-                "green" => green += qty,
-                "blue" => blue += qty,
+                "red" => obj.red = qty,
+                "green" => obj.green = qty,
+                "blue" => obj.blue = qty,
                 _ => return Err(Error::NoColourFound),
             };
         }
-        Ok(Self {
-            red: red,
-            green: green,
-            blue: blue,
-        })
+        Ok(obj)
     }
 }
 
