@@ -78,9 +78,28 @@ impl Game {
     fn check_rounds(&self) -> bool {
         self.rounds.iter().all(|round| round.within_max())
     }
+
+    fn get_power(&self) -> i32 {
+        let mut max_red = 0;
+        let mut max_green = 0;
+        let mut max_blue = 0;
+
+        for round in &self.rounds {
+            if round.red > max_red {
+                max_red = round.red
+            }
+            if round.green > max_green {
+                max_green = round.green
+            }
+            if round.blue > max_blue {
+                max_blue = round.blue
+            }
+        }
+        max_red * max_green * max_blue
+    }
 }
 
-fn sum_winning_games(games: Vec<Game>) -> i32 {
+fn sum_winning_games(games: &Vec<Game>) -> i32 {
     games
         .iter()
         .filter(|&game| game.check_rounds())
@@ -96,7 +115,9 @@ fn read_input(filename: &str) -> Vec<String> {
 
 fn main() {
     let data = read_input("part_1.txt");
-    let new_data: Vec<Game> = data.iter().map(|n| Game::new(&n)).collect();
-    let part_1 = sum_winning_games(new_data);
+    let games: Vec<Game> = data.iter().map(|n| Game::new(&n)).collect();
+    let part_1 = sum_winning_games(&games);
     println!("{:?}", part_1);
+    let part_2: i32 = games.iter().map(|game| game.get_power()).sum();
+    println!("{:?}", part_2);
 }
