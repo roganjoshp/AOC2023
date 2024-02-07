@@ -57,6 +57,15 @@ fn build_maps(data: Vec<Vec<char>>) -> (Vec<Number>, HashSet<(i32, i32)>) {
     let mut digits: Vec<Digit> = Vec::new();
 
     for (i, row) in data.iter().enumerate() {
+        if number_started {
+            numbers.push(Number {
+                value: str_number.parse::<i32>().unwrap(),
+                digit_coords: digits.clone(),
+            });
+            number_started = false;
+            str_number.clear();
+            digits.clear();
+        }
         for (j, col_value) in row.iter().enumerate() {
             if col_value.is_ascii_digit() {
                 number_started = true;
@@ -88,7 +97,7 @@ fn read_input(filename: &str) -> Vec<Vec<char>> {
 }
 
 fn main() {
-    let input = read_input("test_file.txt");
+    let input = read_input("part_1.txt");
 
     let (numbers, symbol_indices) = build_maps(input);
     println!("{}", numbers.len());
