@@ -1,5 +1,7 @@
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fs;
+use std::thread::current;
 
 #[derive(Debug)]
 struct Seed {
@@ -119,20 +121,44 @@ impl Mapper {
         return source;
     }
 
-    fn score_seeds(&self) -> u64 {
+    fn score_seed(&self, seed_id: u64) -> u64 {
+        let mut current_source = seed_id;
+        for map in &self.map_order {
+            let destination = self.find_destination(map, current_source);
+            current_source = destination;
+        }
+        current_source
+    }
+
+    fn find_min_individual_seed_score(&self) -> u64 {
         let mut lowest_score = u64::MAX;
 
         for seed in &self.seeds {
-            let mut current_source = seed.id;
-            for map in &self.map_order {
-                let destination = self.find_destination(map, current_source);
-                current_source = destination;
-            }
-            if current_source < lowest_score {
-                lowest_score = current_source;
+            let seed_score = self.score_seed(seed.id);
+            if seed_score < lowest_score {
+                lowest_score = seed_score;
             }
         }
         lowest_score
+    }
+
+    fn find_min_seed_pair_score_brute(&self) -> u64 {
+        let mut seed_scores: Vec<u64> = Vec::with_capacity(self.seeds.len() / 2);
+        let mut count: i32 = 1;
+        for pair in self.seeds.chunks(2) {
+            let start = pair[0].id;
+            let end = pair[0].id + pair[1].id - 1;
+            let mut min_score: u64 = (start..end)
+                .into_par_iter()
+                .map(|seed_id| self.score_seed(seed_id))
+                .min()
+                .unwrap();
+            seed_scores.push(min_score);
+            println!("Done {:?}", count);
+            count += 1;
+        }
+        println!("{:?}", seed_scores);
+        *seed_scores.iter().min().unwrap()
     }
 }
 
@@ -146,6 +172,6 @@ fn main() {
     let mut maps = Mapper::new();
     let data = read_input("part_1.txt");
     maps.parse_data(&data);
-    let lowest_score = maps.score_seeds();
-    println!("LOWEST SCORE: {:?}", lowest_score);
+    let min_score = maps.find_min_seed_pair_score_brute();
+    println!("MIN: {:?}", min_score);
 }
