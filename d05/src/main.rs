@@ -3,19 +3,6 @@ use std::collections::HashMap;
 use std::fs;
 use std::thread::current;
 
-#[derive(Debug)]
-struct Seed {
-    id: u64,
-}
-
-impl Seed {
-    fn from_id(id: &str) -> Self {
-        Self {
-            id: id.parse::<u64>().unwrap(),
-        }
-    }
-}
-
 #[derive(Debug, Default)]
 struct MappedRange {
     start: u64,
@@ -45,10 +32,9 @@ impl MappedRange {
 
 #[derive(Debug, Default)]
 struct Mapper {
-    seeds: Vec<Seed>,
+    seeds: Vec<u64>,
     map_order: Vec<String>,
     maps: HashMap<String, Vec<MappedRange>>,
-    seed_scores: HashMap<Seed, u64>,
 }
 
 impl Mapper {
@@ -75,9 +61,9 @@ impl Mapper {
     fn parse_data(&mut self, data: &Vec<String>) -> () {
         // The first row is just a list of the seeds
         let seed_data: Vec<&str> = data[0].split_ascii_whitespace().collect();
-        let seeds: Vec<Seed> = seed_data[1..]
+        let seeds: Vec<u64> = seed_data[1..]
             .iter()
-            .map(|&id| Seed::from_id(&id))
+            .map(|&id| id.parse::<u64>().unwrap())
             .collect();
         self.seeds = seeds;
 
@@ -133,8 +119,8 @@ impl Mapper {
     fn find_min_individual_seed_score(&self) -> u64 {
         let mut lowest_score = u64::MAX;
 
-        for seed in &self.seeds {
-            let seed_score = self.score_seed(seed.id);
+        for &seed in &self.seeds {
+            let seed_score = self.score_seed(seed);
             if seed_score < lowest_score {
                 lowest_score = seed_score;
             }
@@ -146,8 +132,8 @@ impl Mapper {
         let mut seed_scores: Vec<u64> = Vec::with_capacity(self.seeds.len() / 2);
         let mut count: i32 = 1;
         for pair in self.seeds.chunks(2) {
-            let start = pair[0].id;
-            let end = pair[0].id + pair[1].id - 1;
+            let start = pair[0];
+            let end = pair[0] + pair[1] - 1;
             let mut min_score: u64 = (start..end)
                 .into_par_iter()
                 .map(|seed_id| self.score_seed(seed_id))
@@ -172,6 +158,8 @@ fn main() {
     let mut maps = Mapper::new();
     let data = read_input("part_1.txt");
     maps.parse_data(&data);
+    let min_score = maps.find_min_individual_seed_score();
+    println!("Min part 1: {:?}", min_score);
     let min_score = maps.find_min_seed_pair_score_brute();
-    println!("MIN: {:?}", min_score);
+    println!("Min part 2: {:?}", min_score);
 }
