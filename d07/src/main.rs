@@ -69,6 +69,8 @@ impl PartialOrd for Cards {
                     return Some(Ordering::Greater);
                 }
             }
+        } else {
+            return Some(Ordering::Less);
         }
         None
     }
@@ -144,7 +146,6 @@ fn create_hand(hand: &[&str]) -> Hand {
         deck.push(Card::new(card, value));
     }
     let hand = determine_hand(deck, bid).unwrap();
-    println!("{:?}", hand);
     hand
 }
 
@@ -164,7 +165,7 @@ fn play_game_1(hands: &mut Vec<Hand>) -> () {
     let mut score = 0;
     for (rank, hand) in hands.iter().enumerate() {
         println!("{:?}\n\n", hand);
-        // score += rank * hand::Cards().bid;
+        // score += rank * hand.?????;
     }
     println!("Part 1: {score}");
 }
