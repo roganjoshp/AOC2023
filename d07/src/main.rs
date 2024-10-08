@@ -163,7 +163,7 @@ fn read_input(filename: &str) -> Vec<Hand> {
 fn play_game_1(hands: &mut Vec<Hand>) -> () {
     hands.sort();
     let mut score = 0;
-    for (rank, hand) in hands.iter().enumerate() {
+    for (rank, hand) in hands.iter().rev().enumerate() {
         println!("{:?}\n\n", hand);
         // score += rank * hand.?????;
     }
